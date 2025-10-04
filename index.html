@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Labubu Virtual Pet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container"></div>
+    <div id="ui-container">
+        <div id="stats-container">
+            <div class="stat">
+                <span>Hunger:</span>
+                <div class="progress-bar-container">
+                    <div id="hunger-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            <div class="stat">
+                <span>Happiness:</span>
+                <div class="progress-bar-container">
+                    <div id="happiness-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            <div class="stat">
+                <span>Hygiene:</span>
+                <div class="progress-bar-container">
+                    <div id="hygiene-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            <div class="stat">
+                <span>Energy:</span>
+                <div class="progress-bar-container">
+                    <div id="energy-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div id="actions-container">
+            <button id="feed-button">Feed</button>
+            <button id="play-button">Play</button>
+            <button id="clean-button">Clean</button>
+            <button id="sleep-button">Sleep</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
