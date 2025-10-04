@@ -9,8 +9,8 @@ class GameScene extends Phaser.Scene {
             energy: 100,
             money: 50, 
             lastUpdated: Date.now(),
-            lastRentPaid: Date.now(), // New: Timestamp for last rent payment
-            lastMedicalBillPaid: Date.now() // New: Timestamp for last medical bill payment
+            lastRentPaid: Date.now(), 
+            lastMedicalBillPaid: Date.now() 
         };
         this.actionTimers = {
             eating: 0,
@@ -358,9 +358,12 @@ class GameScene extends Phaser.Scene {
 // Phaser Game Config
 const config = {
     type: Phaser.AUTO,
-    width: 360,
-    height: 640,
-    parent: 'game-container',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        parent: 'game-container',
+        width: 360,
+        height: 640,
+    },
     backgroundColor: '#ffffff',
     scene: [GameScene]
 };
