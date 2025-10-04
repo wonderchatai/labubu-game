@@ -97,14 +97,14 @@ class GameScene extends Phaser.Scene {
 
     setupUI() {
         document.getElementById('feed-button').addEventListener('click', () => {
-            if (this.isGameOver || this.labubuState.money < this.FEED_COST) return;
+            if (this.isGameOver || this.labubuState.money < this.FEED_COST || this.actionTimers.sleeping > 0) return; // Added check for sleeping
             this.labubuState.money -= this.FEED_COST; // Deduct cost
             this.labubuState.hunger = Math.min(100, this.labubuState.hunger + 25); // Increased effect
             this.actionTimers.eating = 2000; 
             this.saveGame();
         });
         document.getElementById('play-button').addEventListener('click', () => {
-            if (this.isGameOver || this.labubuState.money < this.PLAY_COST) return;
+            if (this.isGameOver || this.labubuState.money < this.PLAY_COST || this.actionTimers.sleeping > 0) return; // Added check for sleeping
             this.labubuState.money -= this.PLAY_COST; // Deduct cost
             this.labubuState.happiness = Math.min(100, this.labubuState.happiness + 20); // Increased effect
             this.labubuState.energy = Math.max(0, this.labubuState.energy - 10); // Play costs energy
@@ -112,12 +112,12 @@ class GameScene extends Phaser.Scene {
             this.saveGame();
         });
         document.getElementById('clean-button').addEventListener('click', () => {
-            if (this.isGameOver) return;
+            if (this.isGameOver || this.actionTimers.sleeping > 0) return; // Added check for sleeping
             this.labubuState.hygiene = Math.min(100, this.labubuState.hygiene + 30); // Increased effect
             this.saveGame();
         });
         document.getElementById('sleep-button').addEventListener('click', () => {
-            if (this.isGameOver) return;
+            if (this.isGameOver || this.actionTimers.sleeping > 0) return; // Prevent sleeping multiple times
              this.actionTimers.sleeping = 10000; // Sleep for 10 seconds
              this.time.delayedCall(10000, () => {
                 this.labubuState.energy = 100;
@@ -125,7 +125,7 @@ class GameScene extends Phaser.Scene {
              });
         });
         document.getElementById('work-button').addEventListener('click', () => {
-            if (this.isGameOver || this.labubuState.energy < 20) return; // Cannot work if too tired
+            if (this.isGameOver || this.labubuState.energy < 20 || this.actionTimers.sleeping > 0) return; // Added check for sleeping
             this.labubuState.money += this.WORK_EARNINGS; // Earn money
             this.labubuState.energy = Math.max(0, this.labubuState.energy - 30); // Working costs significant energy
             this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 10); // Working slightly decreases happiness
@@ -147,6 +147,8 @@ class GameScene extends Phaser.Scene {
     }
 
     updateUI() {
+        const isSleeping = this.actionTimers.sleeping > 0;
+
         document.getElementById('money-amount').textContent = this.labubuState.money;
 
         document.getElementById('hunger-bar').style.width = this.labubuState.hunger + '%';
@@ -163,12 +165,12 @@ class GameScene extends Phaser.Scene {
         // Show/hide restart button
         document.getElementById('restart-button').style.display = this.isGameOver ? 'block' : 'none';
         
-        // Disable action buttons if game is over or conditions not met
-        document.getElementById('feed-button').disabled = this.isGameOver || this.labubuState.money < this.FEED_COST;
-        document.getElementById('play-button').disabled = this.isGameOver || this.labubuState.money < this.PLAY_COST;
-        document.getElementById('clean-button').disabled = this.isGameOver;
-        document.getElementById('sleep-button').disabled = this.isGameOver;
-        document.getElementById('work-button').disabled = this.isGameOver || this.labubuState.energy < 20;
+        // Disable action buttons if game is over or conditions not met, or if sleeping
+        document.getElementById('feed-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.FEED_COST;
+        document.getElementById('play-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.PLAY_COST;
+        document.getElementById('clean-button').disabled = this.isGameOver || isSleeping;
+        document.getElementById('sleep-button').disabled = this.isGameOver || isSleeping;
+        document.getElementById('work-button').disabled = this.isGameOver || isSleeping || this.labubuState.energy < 20;
 
     }
 
