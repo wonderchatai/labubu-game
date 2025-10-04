@@ -7,6 +7,7 @@
 <body>
     <div id="game-container"></div>
     <div id="ui-container">
+        <div id="money-display">Money: <span id="money-amount">0</span></div>
         <div id="stats-container">
             <div class="stat">
                 <span>Hunger:</span>
@@ -34,10 +35,11 @@
             </div>
         </div>
         <div id="actions-container">
-            <button id="feed-button">Feed</button>
-            <button id="play-button">Play</button>
+            <button id="feed-button">Feed ($10)</button>
+            <button id="play-button">Play ($5)</button>
             <button id="clean-button">Clean</button>
             <button id="sleep-button">Sleep</button>
+            <button id="work-button">Work (+$20)</button>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>

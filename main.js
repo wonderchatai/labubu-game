@@ -7,15 +7,22 @@ class GameScene extends Phaser.Scene {
             happiness: 100,
             hygiene: 100,
             energy: 100,
+            money: 50, // New: Starting money
             lastUpdated: Date.now()
         };
         this.actionTimers = {
             eating: 0,
             playing: 0,
-            sleeping: 0
+            sleeping: 0,
+            working: 0 // New: Working timer
         };
         this.isInteracting = false;
         this.isGameOver = false;
+
+        // Game costs
+        this.FEED_COST = 10;
+        this.PLAY_COST = 5;
+        this.WORK_EARNINGS = 20;
     }
 
     preload() {
@@ -33,26 +40,26 @@ class GameScene extends Phaser.Scene {
         this.loadGame();
         this.calculateOfflineProgression();
 
-        // Timers for stat degradation
+        // Timers for stat degradation (adjusted for realism/balance, but still fast for testing)
         this.degradationTimers = [];
         this.degradationTimers.push(this.time.addEvent({
-            delay: 3000, // 3 seconds for testing, should be 30000 (30s)
-            callback: () => { this.labubuState.hunger = Math.max(0, this.labubuState.hunger - 3); },
+            delay: 15000, // Hunger decreases every 15 seconds
+            callback: () => { this.labubuState.hunger = Math.max(0, this.labubuState.hunger - 5); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 6000, // 6 seconds for testing, should be 60000 (60s)
-            callback: () => { this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 2); },
+            delay: 20000, // Happiness decreases every 20 seconds
+            callback: () => { this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 4); },
             loop: true
         }));
          this.degradationTimers.push(this.time.addEvent({
-            delay: 12000, // 12 seconds for testing, should be 120000 (120s)
-            callback: () => { this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - 2); },
+            delay: 30000, // Hygiene decreases every 30 seconds
+            callback: () => { this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - 3); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 9000, // 9 seconds for testing, should be 90000 (90s)
-            callback: () => { this.labubuState.energy = Math.max(0, this.labubuState.energy - 1); },
+            delay: 25000, // Energy decreases every 25 seconds
+            callback: () => { this.labubuState.energy = Math.max(0, this.labubuState.energy - 2); },
             loop: true
         }));
 
@@ -90,32 +97,40 @@ class GameScene extends Phaser.Scene {
 
     setupUI() {
         document.getElementById('feed-button').addEventListener('click', () => {
-            if (this.isGameOver) return;
-            this.labubuState.hunger = Math.min(100, this.labubuState.hunger + 15);
-            this.actionTimers.eating = 2000; // Show eating sprite for 2 seconds
+            if (this.isGameOver || this.labubuState.money < this.FEED_COST) return;
+            this.labubuState.money -= this.FEED_COST; // Deduct cost
+            this.labubuState.hunger = Math.min(100, this.labubuState.hunger + 25); // Increased effect
+            this.actionTimers.eating = 2000; 
             this.saveGame();
         });
         document.getElementById('play-button').addEventListener('click', () => {
-            if (this.isGameOver) return;
-            this.labubuState.happiness = Math.min(100, this.labubuState.happiness + 10);
-            this.labubuState.energy = Math.max(0, this.labubuState.energy - 5);
-            this.actionTimers.playing = 2000; // Show happy sprite for 2 seconds
+            if (this.isGameOver || this.labubuState.money < this.PLAY_COST) return;
+            this.labubuState.money -= this.PLAY_COST; // Deduct cost
+            this.labubuState.happiness = Math.min(100, this.labubuState.happiness + 20); // Increased effect
+            this.labubuState.energy = Math.max(0, this.labubuState.energy - 10); // Play costs energy
+            this.actionTimers.playing = 2000;
             this.saveGame();
         });
         document.getElementById('clean-button').addEventListener('click', () => {
             if (this.isGameOver) return;
-            this.labubuState.hygiene = Math.min(100, this.labubuState.hygiene + 20);
+            this.labubuState.hygiene = Math.min(100, this.labubuState.hygiene + 30); // Increased effect
             this.saveGame();
         });
         document.getElementById('sleep-button').addEventListener('click', () => {
             if (this.isGameOver) return;
-            // Set sleeping timer
-            this.actionTimers.sleeping = 10000; // Sleep for 10 seconds
-            // After 10 seconds, set energy to full
-            this.time.delayedCall(10000, () => {
+             this.actionTimers.sleeping = 10000; // Sleep for 10 seconds
+             this.time.delayedCall(10000, () => {
                 this.labubuState.energy = 100;
                 this.saveGame();
-            });
+             });
+        });
+        document.getElementById('work-button').addEventListener('click', () => {
+            if (this.isGameOver || this.labubuState.energy < 20) return; // Cannot work if too tired
+            this.labubuState.money += this.WORK_EARNINGS; // Earn money
+            this.labubuState.energy = Math.max(0, this.labubuState.energy - 30); // Working costs significant energy
+            this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 10); // Working slightly decreases happiness
+            this.actionTimers.working = 3000; // Work animation for 3 seconds
+            this.saveGame();
         });
 
         // Add restart button (not in original plan, but good for game over state)
@@ -132,6 +147,8 @@ class GameScene extends Phaser.Scene {
     }
 
     updateUI() {
+        document.getElementById('money-amount').textContent = this.labubuState.money;
+
         document.getElementById('hunger-bar').style.width = this.labubuState.hunger + '%';
         document.getElementById('happiness-bar').style.width = this.labubuState.happiness + '%';
         document.getElementById('hygiene-bar').style.width = this.labubuState.hygiene + '%';
@@ -145,11 +162,14 @@ class GameScene extends Phaser.Scene {
 
         // Show/hide restart button
         document.getElementById('restart-button').style.display = this.isGameOver ? 'block' : 'none';
-        // Disable action buttons if game is over
-        document.getElementById('feed-button').disabled = this.isGameOver;
-        document.getElementById('play-button').disabled = this.isGameOver;
+        
+        // Disable action buttons if game is over or conditions not met
+        document.getElementById('feed-button').disabled = this.isGameOver || this.labubuState.money < this.FEED_COST;
+        document.getElementById('play-button').disabled = this.isGameOver || this.labubuState.money < this.PLAY_COST;
         document.getElementById('clean-button').disabled = this.isGameOver;
         document.getElementById('sleep-button').disabled = this.isGameOver;
+        document.getElementById('work-button').disabled = this.isGameOver || this.labubuState.energy < 20;
+
     }
 
     setProgressBarColor(id, value) {
@@ -175,6 +195,13 @@ class GameScene extends Phaser.Scene {
             this.labubuSprite.setTexture('labubu_happy');
         } else if (this.actionTimers.sleeping > 0) {
              this.labubuSprite.setTexture('labubu_sleeping');
+        } else if (this.actionTimers.working > 0) {
+             // No specific 'working' sprite, use idle or a tired look if energy is low
+             if (this.labubuState.energy < 50) {
+                 this.labubuSprite.setTexture('labubu_sad');
+             } else {
+                 this.labubuSprite.setTexture('labubu_idle');
+             }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
         } else {
@@ -190,7 +217,13 @@ class GameScene extends Phaser.Scene {
     loadGame() {
         const savedData = localStorage.getItem('labubuSaveData');
         if (savedData) {
-            this.labubuState = JSON.parse(savedData);
+            // Ensure new properties are initialized if loading an older save
+            const loadedState = JSON.parse(savedData);
+            this.labubuState = { ...this.labubuState, ...loadedState };
+            // Make sure money is a number, default to 0 if not present
+            if (typeof this.labubuState.money !== 'number') {
+                this.labubuState.money = 0;
+            }
         }
     }
     
@@ -200,22 +233,24 @@ class GameScene extends Phaser.Scene {
 
         if (timeDiffSeconds > 0) {
             // Degradation values for offline progression (matching online rates)
-            const hungerLossPer30s = 3;
-            const happinessLossPer60s = 2;
-            const hygieneLossPer120s = 2;
-            const energyLossPer90s = 1;
+            const hungerLossPer15s = 5;
+            const happinessLossPer20s = 4;
+            const hygieneLossPer30s = 3;
+            const energyLossPer25s = 2;
 
-            this.labubuState.hunger = Math.max(0, this.labubuState.hunger - Math.floor(timeDiffSeconds / 30) * hungerLossPer30s);
-            this.labubuState.happiness = Math.max(0, this.labubuState.happiness - Math.floor(timeDiffSeconds / 60) * happinessLossPer60s);
-            this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - Math.floor(timeDiffSeconds / 120) * hygieneLossPer120s);
-            this.labubuState.energy = Math.max(0, this.labubuState.energy - Math.floor(timeDiffSeconds / 90) * energyLossPer90s);
+            this.labubuState.hunger = Math.max(0, this.labubuState.hunger - Math.floor(timeDiffSeconds / 15) * hungerLossPer15s);
+            this.labubuState.happiness = Math.max(0, this.labubuState.happiness - Math.floor(timeDiffSeconds / 20) * happinessLossPer20s);
+            this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - Math.floor(timeDiffSeconds / 30) * hygieneLossPer30s);
+            this.labubuState.energy = Math.max(0, this.labubuState.energy - Math.floor(timeDiffSeconds / 25) * energyLossPer25s);
+            
+            // No change to money during offline progression for simplicity
         }
 
         this.saveGame(); // Update timestamp immediately
     }
 
     checkGameOver() {
-        if (this.labubuState.hunger <= 0 || this.labubuState.happiness <= 0 || this.labubuState.hygiene <= 0 || this.labubuState.energy <= 0) {
+        if (this.labubuState.hunger <= 0 || this.labubuState.happiness <= 0 || this.labubuState.hygiene <= 0 || this.labubuState.energy <= 0 || this.labubuState.money < 0) {
             this.isGameOver = true;
             // Stop all degradation timers
             this.degradationTimers.forEach(timer => timer.remove());

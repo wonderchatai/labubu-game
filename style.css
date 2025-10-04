@@ -24,6 +24,13 @@ body {
     border-top: none;
 }
 
+#money-display {
+    text-align: right;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
 #stats-container {
     display: flex;
     flex-direction: column;
@@ -55,6 +62,8 @@ body {
 #actions-container {
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 10px; /* Space between buttons */
 }
 
 button {
@@ -65,6 +74,8 @@ button {
     border-radius: 5px;
     background-color: #f8f8f8;
     transition: background-color 0.2s ease;
+    flex: 1 1 auto; /* Allow buttons to grow and shrink */
+    min-width: 100px; /* Minimum width for buttons */
 }
 
 button:hover {
@@ -74,4 +85,10 @@ button:hover {
 button:active {
     background-color: #d0d0d0;
     transform: translateY(1px);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: #e0e0e0;
 }
