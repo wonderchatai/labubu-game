@@ -251,8 +251,6 @@ class GameScene extends Phaser.Scene {
         } else if (this.actionTimers.working > 0) {
              if (this.labubuState.energy < 50) {
                  this.labubuSprite.setTexture('labubu_sad');
-             } else {
-                 this.labubuSprite.setTexture('labubu_idle');
              }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
@@ -428,7 +426,8 @@ class GameScene extends Phaser.Scene {
 
         // Use visualViewport.height for a more accurate height on iOS Safari
         const currentViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const availableHeight = currentViewportHeight - uiHeight; // Subtract UI height from total viewport
+        const iOS_SAFARI_BUFFER = 80; // Increased buffer for iOS Safari
+        const availableHeight = currentViewportHeight - uiHeight - iOS_SAFARI_BUFFER; 
         const availableWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
 
         let newGameWidth = availableWidth;
