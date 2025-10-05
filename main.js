@@ -240,8 +240,7 @@ class GameScene extends Phaser.Scene {
             bar.style.backgroundColor = '#ffeb3b'; // Yellow
         } else {
             bar.style.backgroundColor = '#4caf50'; // Green
-        }
-    }
+        }\n    }
 
     updateLabubuSprite() {
         if (this.isGameOver) {
@@ -456,8 +455,8 @@ class GameScene extends Phaser.Scene {
         if (this.labubuSprite && this.labubuOriginalWidth && this.labubuOriginalHeight) {
             const scaleX = scaleManager.width / this.labubuOriginalWidth;
             const scaleY = scaleManager.height / this.labubuOriginalHeight;
-            // Use the smaller scale to fit within both dimensions, now WITHOUT the 0.8 factor
-            const scaleFactor = Math.min(scaleX, scaleY); 
+            // Use the larger scale to fill one dimension, potentially cropping the other
+            const scaleFactor = Math.max(scaleX, scaleY); 
             this.labubuSprite.setScale(scaleFactor);
         }
 
