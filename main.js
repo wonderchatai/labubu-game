@@ -456,8 +456,9 @@ class GameScene extends Phaser.Scene {
         if (this.labubuSprite && this.labubuOriginalWidth && this.labubuOriginalHeight) {
             const scaleX = scaleManager.width / this.labubuOriginalWidth;
             const scaleY = scaleManager.height / this.labubuOriginalHeight;
-            // Use the smaller scale to fit within both dimensions, now WITHOUT the 0.8 factor
-            const scaleFactor = Math.min(scaleX, scaleY); 
+            // Use the smaller scale to fit within both dimensions, and then slightly enlarge it
+            let scaleFactor = Math.min(scaleX, scaleY);
+            scaleFactor *= 1.2; // Increase by 20%
             this.labubuSprite.setScale(scaleFactor);
         }
 
