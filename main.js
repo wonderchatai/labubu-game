@@ -116,6 +116,10 @@ class GameScene extends Phaser.Scene {
 
         this.setupUI();
         this.checkGameOver();
+
+        // Initial resize call and event listener
+        this.scale.on('resize', this.resize, this);
+        this.resize(this.game.scale.width, this.game.scale.height); // Initial call with current dimensions
     }
 
     update(time, delta) {
@@ -416,20 +420,71 @@ class GameScene extends Phaser.Scene {
             }
         }
     }
+
+    // New resize method
+    resize(gameSize, baseSize) {
+        const gameContainer = document.getElementById('game-container');
+        const uiContainer = document.getElementById('ui-container');
+
+        const uiHeight = uiContainer.offsetHeight; // Get rendered height of UI
+        const availableHeight = window.innerHeight - uiHeight; // Subtract UI height from total viewport
+        const availableWidth = window.innerWidth;
+
+        // Calculate a new target width and height for the game canvas
+        // Maintain aspect ratio (360x500 base)
+        let newGameWidth = availableWidth;
+        let newGameHeight = availableWidth * (baseSize.height / baseSize.width); // Adjust proportionally
+
+        // If calculated height exceeds available height, cap it and adjust width
+        if (newGameHeight > availableHeight) {
+            newGameHeight = availableHeight;
+            newGameWidth = availableHeight * (baseSize.width / baseSize.height); // Adjust width proportionally
+        }
+
+        // Apply max-width constraint if desired (e.g., desktop view)
+        const maxWidth = 400; 
+        if (newGameWidth > maxWidth) {
+            newGameWidth = maxWidth;
+            newGameHeight = maxWidth * (baseSize.height / baseSize.width);
+        }
+
+        this.game.scale.resize(newGameWidth, newGameHeight);
+
+        // Reposition Labubu after resize
+        this.labubuSprite.x = newGameWidth / 2;
+        this.labubuSprite.y = newGameHeight / 2 + 20; // Maintain slight offset
+
+        // Update game over text position if it exists
+        if (this.gameOverText) {
+            this.gameOverText.setPosition(newGameWidth / 2, newGameHeight / 2 - 100);
+        }
+
+        // Update notification text position if it exists
+        if (this.notificationText) {
+            this.notificationText.setPosition(newGameWidth / 2, newGameHeight / 2 - 200);
+        }
+    }
 }
 
 // Phaser Game Config
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT, 
+        mode: Phaser.Scale.RESIZE, // Use RESIZE mode for dynamic resizing
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
-        width: 360,
-        height: 500, // Reduced height further
+        width: 360, // Base width
+        height: 500, // Base height, will be dynamically adjusted
     },
     backgroundColor: '#ffffff',
     scene: [GameScene]
 };
 
 const game = new Phaser.Game(config);
+
+// Global window resize listener to trigger game resize
+window.addEventListener('resize', () => {
+    if (game && game.scale) {
+        game.scene.scenes[0].resize(game.scale, { width: 360, height: 500 }); // Pass base dimensions
+    }
+});
