@@ -1,6 +1,6 @@
 html, body {
     width: 100%;
-    height: 100%;
+    height: 100%; /* Use height: 100% when html is also 100% */
     margin: 0;
     padding: 0;
     overflow: hidden; /* Prevent scrolling */
@@ -13,24 +13,25 @@ body {
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
-    min-height: 100vh; /* Ensure body takes full viewport height */
+    /* min-height: 100vh; no longer strictly necessary if height: 100% is effective */
 }
 
 #game-container {
     width: 100%; /* Take full width */
     flex-grow: 1; /* Allow game container to grow and fill available space */
-    max-width: 400px; /* Optional: Limit max width on very large screens */
+    /* Removed max-width and max-height to allow full flexibility */
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     overflow: hidden; /* Ensure Phaser canvas doesn't overflow */
-    display: flex; /* Use flex to center Phaser canvas if smaller than container */
+    /* Added to center the canvas itself if it doesn't fill the container perfectly */
+    display: flex;
     justify-content: center;
     align-items: center;
 }
 
 #ui-container {
     width: 100%;
-    max-width: 400px; /* Match game container max-width */
+    /* Removed max-width to allow full flexibility */
     padding: 10px;
     background-color: #fff;
     border: 2px solid #333;
