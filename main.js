@@ -39,6 +39,10 @@ class GameScene extends Phaser.Scene {
         this.INFLATION_PLAY_INCREASE = 3;
 
         this.notificationText = null; 
+
+        // Store original Labubu sprite dimensions for scaling calculations
+        this.labubuOriginalWidth = 250; // Assuming a reasonable original image width
+        this.labubuOriginalHeight = 250; // Assuming a reasonable original image height
     }
 
     preload() {
@@ -50,8 +54,11 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Center Labubu without explicit scale, let Phaser handle it
+        // Center Labubu without explicit scale initially
         this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'labubu_idle');
+        // Set initial original dimensions for scaling after image is loaded
+        this.labubuOriginalWidth = this.labubuSprite.width;
+        this.labubuOriginalHeight = this.labubuSprite.height;
 
         this.loadGame();
         this.calculateOfflineProgression();
@@ -118,7 +125,7 @@ class GameScene extends Phaser.Scene {
 
         // Initial resize call and event listener
         this.scale.on('resize', this.resize, this);
-        // Call resize immediately to set initial dimensions
+        // Call resize immediately to set initial dimensions and scale Labubu
         this.resize(this.game.scale); 
     }
 
@@ -379,16 +386,6 @@ class GameScene extends Phaser.Scene {
             }
 
             // New: Offline Inflation progression
-            // Calculate elapsed time based on how many inflation intervals have passed since lastUpdated
-            // We need to be careful not to apply inflation multiple times if loading an old save
-            // A more robust solution might track lastInflationTime in state, but for now this approximates.
-            // Let's assume inflation applies based on total time passed since game start or last reset.
-            // This part is tricky for precise offline inflation matching online ticks without storing lastInflationTick.           
-            // For simplicity in offline, let's just apply inflation based on fixed intervals from a theoretical start if `inflationLevel` is 0.
-
-            // A simpler, more practical approach for offline inflation is to re-calculate current costs
-            // based on how many INFLATION_INTERVAL_MS periods have passed since game start/reset.
-            // This assumes inflation is a continuous process, not just triggered by online events.
             const totalInflationCycles = Math.floor(now / this.INFLATION_INTERVAL_MS) - Math.floor(this.labubuState.lastUpdated / this.INFLATION_INTERVAL_MS);
             if (totalInflationCycles > 0 && this.labubuState.inflationLevel < totalInflationCycles) {
                 const cyclesToAdd = totalInflationCycles - this.labubuState.inflationLevel;
@@ -444,18 +441,26 @@ class GameScene extends Phaser.Scene {
         }
 
         // Set game-container's dimensions based on calculated available space
-        // Its width should respect the maxWidth, its height is the remaining space
         if (gameContainer) {
             gameContainer.style.width = `${targetWidth}px`; // Set width explicitly
             gameContainer.style.height = `${availableHeightForGame}px`;
-            // Crucially, tell Phaser to resize itself to its parent's new dimensions
-            scaleManager.resize(targetWidth, availableHeightForGame);
+            // Phaser RESIZE mode will automatically adjust the canvas to its parent container's size.
         }
 
         // Reposition Labubu and text elements based on new canvas size
         // scaleManager.width/height reflect the actual canvas size after resize()
         this.labubuSprite.x = scaleManager.width / 2;
         this.labubuSprite.y = scaleManager.height / 2; 
+
+        // Dynamic scaling for Labubu sprite
+        // Calculate scale to fill a significant portion (e.g., 80%) of the canvas
+        if (this.labubuSprite && this.labubuOriginalWidth && this.labubuOriginalHeight) {
+            const scaleX = scaleManager.width / this.labubuOriginalWidth;
+            const scaleY = scaleManager.height / this.labubuOriginalHeight;
+            // Use the smaller scale to fit within both dimensions, and multiply by a factor (e.g., 0.8)
+            const scaleFactor = Math.min(scaleX, scaleY) * 0.8; 
+            this.labubuSprite.setScale(scaleFactor);
+        }
 
         if (this.gameOverText) {
             this.gameOverText.setPosition(scaleManager.width / 2, scaleManager.height / 2 - 100);
@@ -474,7 +479,7 @@ const config = {
         mode: Phaser.Scale.RESIZE, // Use RESIZE mode for dynamic resizing
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
-        // Removed fixed width/height here; RESIZE mode will infer from parent
+        // No fixed width/height here; RESIZE mode will infer from parent
     },
     backgroundColor: '#ffffff',
     scene: [GameScene]
@@ -485,7 +490,6 @@ const game = new Phaser.Game(config);
 // Global window resize listener to trigger game resize
 window.addEventListener('resize', () => {
     if (game && game.scale && game.scene.scenes[0]) {
-        // Pass only the scaleManager, as the baseSize is not strictly needed for RESIZE mode
         game.scene.scenes[0].resize(game.scale); 
     }
 });
@@ -494,7 +498,6 @@ window.addEventListener('resize', () => {
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
         if (game && game.scale && game.scene.scenes[0]) {
-            // Pass only the scaleManager
             game.scene.scenes[0].resize(game.scale); 
         }
     });
