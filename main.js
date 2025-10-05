@@ -50,6 +50,7 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // Center Labubu
         this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'labubu_idle').setScale(0.5);
 
         this.loadGame();
@@ -245,12 +246,25 @@ class GameScene extends Phaser.Scene {
         } else if (this.actionTimers.working > 0) {
              if (this.labubuState.energy < 50) {
                  this.labubuSprite.setTexture('labubu_sad');
+             } else {
+                 this.labubuSprite.setTexture('labubu_idle');
              }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
         } else {
             this.labubuSprite.setTexture('labubu_idle');
         }
+    }
+
+    triggerInflation() {
+        if (this.isGameOver) return;
+
+        this.labubuState.inflationLevel++;
+        this.labubuState.feedCost += this.INFLATION_FEED_INCREASE;
+        this.labubuState.playCost += this.INFLATION_PLAY_INCREASE;
+
+        this.displayNotification(`Inflation! Prices increased!`);
+        this.saveGame();
     }
 
     payRent() {
@@ -407,7 +421,7 @@ class GameScene extends Phaser.Scene {
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.HEIGHT_CONTROLS_WIDTH, // Use HEIGHT_CONTROLS_WIDTH or WIDTH_CONTROLS_HEIGHT
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
         width: 360,
