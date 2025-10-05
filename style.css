@@ -20,19 +20,19 @@ body {
 #game-container {
     width: 100%; /* Take full width */
     flex-grow: 1; /* Allow game container to grow and fill available space */
-    /* Removed max-width to allow more flexibility */
+    max-width: 400px; /* Optional: Limit max width on larger screens to maintain aspect ratio */
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     overflow: hidden; /* Ensure Phaser canvas doesn't overflow its container */
     display: flex; /* Use flex to center Phaser canvas if smaller than container */
     justify-content: center;
     align-items: center;
-    min-height: 200px; /* Ensure a minimum size for the game */
+    /* min-height: 200px; Removed to allow game container to shrink as much as needed */
 }
 
 #ui-container {
     width: 100%;
-    /* Removed max-width to allow more flexibility */
+    max-width: 400px; /* Match game container max-width */
     padding: 10px;
     background-color: #fff;
     border: 2px solid #333;
