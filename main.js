@@ -41,8 +41,8 @@ class GameScene extends Phaser.Scene {
         this.notificationText = null; 
 
         // Store original Labubu sprite dimensions for scaling calculations
-        this.labubuOriginalWidth = 250; // Assuming a reasonable original image width
-        this.labubuOriginalHeight = 250; // Assuming a reasonable original image height
+        this.labubuOriginalWidth = 0; 
+        this.labubuOriginalHeight = 0; 
     }
 
     preload() {
@@ -442,23 +442,22 @@ class GameScene extends Phaser.Scene {
 
         // Set game-container's dimensions based on calculated available space
         if (gameContainer) {
-            gameContainer.style.width = `${targetWidth}px`; // Set width explicitly
+            gameContainer.style.width = `${targetWidth}px`; 
             gameContainer.style.height = `${availableHeightForGame}px`;
-            // Phaser RESIZE mode will automatically adjust the canvas to its parent container's size.
+            // No manual scaleManager.resize call here; Phaser.Scale.RESIZE will handle it.
         }
 
         // Reposition Labubu and text elements based on new canvas size
-        // scaleManager.width/height reflect the actual canvas size after resize()
+        // scaleManager.width/height reflect the actual canvas size after Phaser's internal resize
         this.labubuSprite.x = scaleManager.width / 2;
         this.labubuSprite.y = scaleManager.height / 2; 
 
         // Dynamic scaling for Labubu sprite
-        // Calculate scale to fill a significant portion (e.g., 80%) of the canvas
         if (this.labubuSprite && this.labubuOriginalWidth && this.labubuOriginalHeight) {
             const scaleX = scaleManager.width / this.labubuOriginalWidth;
             const scaleY = scaleManager.height / this.labubuOriginalHeight;
-            // Use the smaller scale to fit within both dimensions, and multiply by a factor (e.g., 0.8)
-            const scaleFactor = Math.min(scaleX, scaleY) * 0.8; 
+            // Use the smaller scale to fit within both dimensions, now WITHOUT the 0.8 factor
+            const scaleFactor = Math.min(scaleX, scaleY); 
             this.labubuSprite.setScale(scaleFactor);
         }
 
