@@ -195,8 +195,7 @@ class GameScene extends Phaser.Scene {
         document.getElementById('actions-container').appendChild(restartButton);
 
         restartButton.addEventListener('click', () => {
-            localStorage.removeItem('labubuSaveData');
-            window.location.reload(); 
+            this.restartGame();
         });
     }
 
@@ -400,14 +399,18 @@ class GameScene extends Phaser.Scene {
 
     checkGameOver() {
         if (this.labubuState.hunger <= 0 || this.labubuState.happiness <= 0 || this.labubuState.hygiene <= 0 || this.labubuState.energy <= 0 || this.labubuState.money < 0) {
-            this.isGameOver = true;
-            this.degradationTimers.forEach(timer => timer.remove());
-            if (!this.gameOverText) {
-                this.gameOverText = this.add.text(this.scale.width / 2, this.scale.height / 2 - 200, 'GAME OVER', {
-                    fontSize: '40px',
-                    fill: '#ff0000',
-                    fontStyle: 'bold'
-                }).setOrigin(0.5);
+            if (!this.isGameOver) { // Only trigger game over logic once
+                this.isGameOver = true;
+                this.degradationTimers.forEach(timer => timer.remove());
+                if (!this.gameOverText) {
+                    this.gameOverText = this.add.text(this.scale.width / 2, this.scale.height / 2 - 200, 'GAME OVER', {
+                        fontSize: '40px',
+                        fill: '#ff0000',
+                        fontStyle: 'bold'
+                    }).setOrigin(0.5);
+                }
+                // Restart game after 2 seconds
+                this.time.delayedCall(2000, this.restartGame, [], this);
             }
         } else {
             this.isGameOver = false;
@@ -416,6 +419,11 @@ class GameScene extends Phaser.Scene {
                 this.gameOverText = null;
             }
         }
+    }
+
+    restartGame() {
+        localStorage.removeItem('labubuSaveData');
+        window.location.reload();
     }
 
     // New resize method
