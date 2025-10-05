@@ -20,10 +20,12 @@ body {
     width: 100%; /* Take full width */
     flex-grow: 1; /* Allow game container to grow and fill available space */
     max-width: 400px; /* Optional: Limit max width on very large screens */
-    /* max-height: 700px; Removed as Phaser will handle its own height dynamically */
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    /* Phaser will manage the canvas size within this container */
+    overflow: hidden; /* Ensure Phaser canvas doesn't overflow */
+    display: flex; /* Use flex to center Phaser canvas if smaller than container */
+    justify-content: center;
+    align-items: center;
 }
 
 #ui-container {

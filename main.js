@@ -245,25 +245,12 @@ class GameScene extends Phaser.Scene {
         } else if (this.actionTimers.working > 0) {
              if (this.labubuState.energy < 50) {
                  this.labubuSprite.setTexture('labubu_sad');
-             } else {
-                 this.labubuSprite.setTexture('labubu_idle');
              }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
         } else {
             this.labubuSprite.setTexture('labubu_idle');
         }
-    }
-
-    triggerInflation() {
-        if (this.isGameOver) return;
-
-        this.labubuState.inflationLevel++;
-        this.labubuState.feedCost += this.INFLATION_FEED_INCREASE;
-        this.labubuState.playCost += this.INFLATION_PLAY_INCREASE;
-
-        this.displayNotification(`Inflation! Prices increased!`);
-        this.saveGame();
     }
 
     payRent() {
@@ -314,7 +301,7 @@ class GameScene extends Phaser.Scene {
             const loadedState = JSON.parse(savedData);
             this.labubuState = { ...this.labubuState, ...loadedState };
             
-            // Initialize new money property if not present
+            // Ensure new money property is a number, default to 50 if not present
             if (typeof this.labubuState.money !== 'number') {
                 this.labubuState.money = 50; 
             }
@@ -373,13 +360,22 @@ class GameScene extends Phaser.Scene {
             }
 
             // New: Offline Inflation progression
-            const elapsedTimeSinceLastInflation = now - (this.labubuState.lastUpdated - timeDiffSeconds * 1000); // Approximate previous lastUpdated
-            const inflationCycles = Math.floor(elapsedTimeSinceLastInflation / this.INFLATION_INTERVAL_MS);
+            // Calculate elapsed time based on how many inflation intervals have passed since lastUpdated
+            // We need to be careful not to apply inflation multiple times if loading an old save
+            // A more robust solution might track lastInflationTime in state, but for now this approximates.
+            // Let's assume inflation applies based on total time passed since game start or last reset.
+            // This part is tricky for precise offline inflation matching online ticks without storing lastInflationTick.           
+            // For simplicity in offline, let's just apply inflation based on fixed intervals from a theoretical start if `inflationLevel` is 0.
 
-            for (let i = 0; i < inflationCycles; i++) {
-                this.labubuState.inflationLevel++;
-                this.labubuState.feedCost += this.INFLATION_FEED_INCREASE;
-                this.labubuState.playCost += this.INFLATION_PLAY_INCREASE;
+            // A simpler, more practical approach for offline inflation is to re-calculate current costs
+            // based on how many INFLATION_INTERVAL_MS periods have passed since game start/reset.
+            // This assumes inflation is a continuous process, not just triggered by online events.
+            const totalInflationCycles = Math.floor(now / this.INFLATION_INTERVAL_MS) - Math.floor(this.labubuState.lastUpdated / this.INFLATION_INTERVAL_MS);
+            if (totalInflationCycles > 0 && this.labubuState.inflationLevel < totalInflationCycles) {
+                const cyclesToAdd = totalInflationCycles - this.labubuState.inflationLevel;
+                this.labubuState.inflationLevel += cyclesToAdd;
+                this.labubuState.feedCost = this.BASE_FEED_COST + (this.labubuState.inflationLevel * this.INFLATION_FEED_INCREASE);
+                this.labubuState.playCost = this.BASE_PLAY_COST + (this.labubuState.inflationLevel * this.INFLATION_PLAY_INCREASE);
             }
         }
 
@@ -412,6 +408,7 @@ const config = {
     type: Phaser.AUTO,
     scale: {
         mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
         width: 360,
         height: 640,
