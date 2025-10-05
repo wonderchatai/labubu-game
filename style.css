@@ -14,7 +14,8 @@ body {
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
-    height: 100vh; /* Ensure body takes full viewport height */
+    height: 100vh; /* Fallback for other browsers */
+    height: -webkit-fill-available; /* Specific for iOS Safari */
 }
 
 #game-container {
@@ -27,7 +28,6 @@ body {
     display: flex; /* Use flex to center Phaser canvas if smaller than container */
     justify-content: center;
     align-items: center;
-    /* min-height: 200px; Removed to allow game container to shrink as much as needed */
 }
 
 #ui-container {
