@@ -13,13 +13,14 @@ body {
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
+    min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
 #game-container {
     width: 100%; /* Take full width */
     flex-grow: 1; /* Allow game container to grow and fill available space */
     max-width: 400px; /* Optional: Limit max width on very large screens */
-    max-height: 700px; /* Optional: Limit max height */
+    /* max-height: 700px; Removed as Phaser will handle its own height dynamically */
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     /* Phaser will manage the canvas size within this container */
