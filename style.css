@@ -14,8 +14,7 @@ body {
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
-    height: 100vh; /* Ensure body takes full viewport height */
-    height: -webkit-fill-available; /* Keep for general iOS compatibility if needed */
+    height: 100dvh; /* Use dynamic viewport height for iOS Safari */
 }
 
 #game-container {
@@ -40,13 +39,6 @@ body {
     border-top: none;
     flex-shrink: 0; /* Prevent UI container from shrinking */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    
-    /* Removed fixed positioning */
-    /* position: fixed; */
-    /* bottom: 0; */
-    /* left: 0; */
-    /* right: 0; */
-    /* z-index: 100; */
 }
 
 #money-display {
