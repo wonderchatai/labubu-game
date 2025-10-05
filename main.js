@@ -10,7 +10,10 @@ class GameScene extends Phaser.Scene {
             money: 50, 
             lastUpdated: Date.now(),
             lastRentPaid: Date.now(), 
-            lastMedicalBillPaid: Date.now() 
+            lastMedicalBillPaid: Date.now(),
+            inflationLevel: 0, // 0 = normal, 1 = moderate, 2 = high
+            feedCost: 10, // Dynamic feed cost
+            playCost: 5 // Dynamic play cost
         };
         this.actionTimers = {
             eating: 0,
@@ -21,18 +24,21 @@ class GameScene extends Phaser.Scene {
         this.isInteracting = false;
         this.isGameOver = false;
 
-        // Game costs
-        this.FEED_COST = 10;
-        this.PLAY_COST = 5;
+        // Game constants
+        this.BASE_FEED_COST = 10;
+        this.BASE_PLAY_COST = 5;
         this.WORK_EARNINGS = 20;
-
-        // New: Periodic charge costs and intervals (for testing, use smaller values)
         this.RENT_COST = 50;
-        this.RENT_INTERVAL_MS = 30000; // Rent every 30 seconds (was 60s)
+        this.RENT_INTERVAL_MS = 30000; 
         this.MEDICAL_BILL_COST = 30;
-        this.MEDICAL_INTERVAL_MS = 90000; // Still 1.5 minutes
+        this.MEDICAL_INTERVAL_MS = 90000; 
 
-        this.notificationText = null; // For displaying temporary messages
+        // Inflation configuration
+        this.INFLATION_INTERVAL_MS = 120000; // Inflation event every 2 minutes for testing
+        this.INFLATION_FEED_INCREASE = 5;
+        this.INFLATION_PLAY_INCREASE = 3;
+
+        this.notificationText = null; 
     }
 
     preload() {
@@ -44,36 +50,39 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Center Labubu
         this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'labubu_idle').setScale(0.5);
 
         this.loadGame();
         this.calculateOfflineProgression();
 
+        // Initialize dynamic costs based on loaded state
+        if (this.labubuState.feedCost === undefined) this.labubuState.feedCost = this.BASE_FEED_COST;
+        if (this.labubuState.playCost === undefined) this.labubuState.playCost = this.BASE_PLAY_COST;
+
         // Timers for stat degradation (increased difficulty)
         this.degradationTimers = [];
         this.degradationTimers.push(this.time.addEvent({
-            delay: 10000, // Hunger decreases every 10 seconds (was 15s)
+            delay: 10000, 
             callback: () => { this.labubuState.hunger = Math.max(0, this.labubuState.hunger - 5); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 15000, // Happiness decreases every 15 seconds (was 20s)
+            delay: 15000, 
             callback: () => { this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 4); },
             loop: true
         }));
          this.degradationTimers.push(this.time.addEvent({
-            delay: 20000, // Hygiene decreases every 20 seconds (was 30s)
+            delay: 20000, 
             callback: () => { this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - 3); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 20000, // Energy decreases every 20 seconds (was 25s)
+            delay: 20000, 
             callback: () => { this.labubuState.energy = Math.max(0, this.labubuState.energy - 2); },
             loop: true
         }));
 
-        // New: Timers for periodic charges
+        // Timers for periodic charges
         this.degradationTimers.push(this.time.addEvent({
             delay: this.RENT_INTERVAL_MS,
             callback: this.payRent,
@@ -83,6 +92,14 @@ class GameScene extends Phaser.Scene {
         this.degradationTimers.push(this.time.addEvent({
             delay: this.MEDICAL_INTERVAL_MS,
             callback: this.payMedicalBill,
+            callbackScope: this,
+            loop: true
+        }));
+
+        // New: Inflation event timer
+        this.degradationTimers.push(this.time.addEvent({
+            delay: this.INFLATION_INTERVAL_MS,
+            callback: this.triggerInflation,
             callbackScope: this,
             loop: true
         }));
@@ -121,15 +138,15 @@ class GameScene extends Phaser.Scene {
 
     setupUI() {
         document.getElementById('feed-button').addEventListener('click', () => {
-            if (this.isGameOver || this.labubuState.money < this.FEED_COST || this.actionTimers.sleeping > 0) return;
-            this.labubuState.money -= this.FEED_COST; 
+            if (this.isGameOver || this.labubuState.money < this.labubuState.feedCost || this.actionTimers.sleeping > 0) return;
+            this.labubuState.money -= this.labubuState.feedCost; 
             this.labubuState.hunger = Math.min(100, this.labubuState.hunger + 25); 
             this.actionTimers.eating = 2000; 
             this.saveGame();
         });
         document.getElementById('play-button').addEventListener('click', () => {
-            if (this.isGameOver || this.labubuState.money < this.PLAY_COST || this.actionTimers.sleeping > 0) return;
-            this.labubuState.money -= this.PLAY_COST; 
+            if (this.isGameOver || this.labubuState.money < this.labubuState.playCost || this.actionTimers.sleeping > 0) return;
+            this.labubuState.money -= this.labubuState.playCost; 
             this.labubuState.happiness = Math.min(100, this.labubuState.happiness + 20); 
             this.labubuState.energy = Math.max(0, this.labubuState.energy - 10); 
             this.actionTimers.playing = 2000;
@@ -175,6 +192,10 @@ class GameScene extends Phaser.Scene {
 
         document.getElementById('money-amount').textContent = this.labubuState.money;
 
+        // Update button texts with current costs
+        document.getElementById('feed-button').textContent = `Feed ($${this.labubuState.feedCost})`;
+        document.getElementById('play-button').textContent = `Play ($${this.labubuState.playCost})`;
+
         document.getElementById('hunger-bar').style.width = this.labubuState.hunger + '%';
         document.getElementById('happiness-bar').style.width = this.labubuState.happiness + '%';
         document.getElementById('hygiene-bar').style.width = this.labubuState.hygiene + '%';
@@ -190,8 +211,8 @@ class GameScene extends Phaser.Scene {
         document.getElementById('restart-button').style.display = this.isGameOver ? 'block' : 'none';
         
         // Disable action buttons if game is over or conditions not met, or if sleeping
-        document.getElementById('feed-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.FEED_COST;
-        document.getElementById('play-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.PLAY_COST;
+        document.getElementById('feed-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.labubuState.feedCost;
+        document.getElementById('play-button').disabled = this.isGameOver || isSleeping || this.labubuState.money < this.labubuState.playCost;
         document.getElementById('clean-button').disabled = this.isGameOver || isSleeping;
         document.getElementById('sleep-button').disabled = this.isGameOver || isSleeping;
         document.getElementById('work-button').disabled = this.isGameOver || isSleeping || this.labubuState.energy < 20;
@@ -232,6 +253,17 @@ class GameScene extends Phaser.Scene {
         } else {
             this.labubuSprite.setTexture('labubu_idle');
         }
+    }
+
+    triggerInflation() {
+        if (this.isGameOver) return;
+
+        this.labubuState.inflationLevel++;
+        this.labubuState.feedCost += this.INFLATION_FEED_INCREASE;
+        this.labubuState.playCost += this.INFLATION_PLAY_INCREASE;
+
+        this.displayNotification(`Inflation! Prices increased!`);
+        this.saveGame();
     }
 
     payRent() {
@@ -281,7 +313,8 @@ class GameScene extends Phaser.Scene {
         if (savedData) {
             const loadedState = JSON.parse(savedData);
             this.labubuState = { ...this.labubuState, ...loadedState };
-            // Ensure new money property is a number, default to 50 if not present
+            
+            // Initialize new money property if not present
             if (typeof this.labubuState.money !== 'number') {
                 this.labubuState.money = 50; 
             }
@@ -292,10 +325,19 @@ class GameScene extends Phaser.Scene {
             if (typeof this.labubuState.lastMedicalBillPaid !== 'number') {
                 this.labubuState.lastMedicalBillPaid = now;
             }
+            // Initialize inflation properties for old saves
+            if (typeof this.labubuState.inflationLevel !== 'number') {
+                this.labubuState.inflationLevel = 0;
+                this.labubuState.feedCost = this.BASE_FEED_COST;
+                this.labubuState.playCost = this.BASE_PLAY_COST;
+            }
         } else {
-            // For a brand new game, ensure these are set to now
+            // For a brand new game, ensure these are set to now and costs are base
             this.labubuState.lastRentPaid = now;
             this.labubuState.lastMedicalBillPaid = now;
+            this.labubuState.inflationLevel = 0;
+            this.labubuState.feedCost = this.BASE_FEED_COST;
+            this.labubuState.playCost = this.BASE_PLAY_COST;
         }
     }
     
@@ -328,6 +370,16 @@ class GameScene extends Phaser.Scene {
             if (medicalCycles > 0) {
                 this.labubuState.money -= medicalCycles * this.MEDICAL_BILL_COST;
                 this.labubuState.lastMedicalBillPaid += medicalCycles * this.MEDICAL_INTERVAL_MS;
+            }
+
+            // New: Offline Inflation progression
+            const elapsedTimeSinceLastInflation = now - (this.labubuState.lastUpdated - timeDiffSeconds * 1000); // Approximate previous lastUpdated
+            const inflationCycles = Math.floor(elapsedTimeSinceLastInflation / this.INFLATION_INTERVAL_MS);
+
+            for (let i = 0; i < inflationCycles; i++) {
+                this.labubuState.inflationLevel++;
+                this.labubuState.feedCost += this.INFLATION_FEED_INCREASE;
+                this.labubuState.playCost += this.INFLATION_PLAY_INCREASE;
             }
         }
 
