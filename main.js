@@ -51,7 +51,8 @@ class GameScene extends Phaser.Scene {
 
     create() {
         // Center Labubu
-        this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'labubu_idle').setScale(0.5);
+        // Adjusted vertical position slightly due to reduced game height
+        this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2 + 20, 'labubu_idle').setScale(0.5);
 
         this.loadGame();
         this.calculateOfflineProgression();
@@ -401,7 +402,7 @@ class GameScene extends Phaser.Scene {
             this.isGameOver = true;
             this.degradationTimers.forEach(timer => timer.remove());
             if (!this.gameOverText) {
-                this.gameOverText = this.add.text(this.scale.width / 2, this.scale.height / 2 - 100, 'GAME OVER', {
+                this.gameOverText = this.add.text(this.scale.width / 2, this.scale.height / 2 - 200, 'GAME OVER', {
                     fontSize: '40px',
                     fill: '#ff0000',
                     fontStyle: 'bold'
@@ -421,11 +422,11 @@ class GameScene extends Phaser.Scene {
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.HEIGHT_CONTROLS_WIDTH, // Use HEIGHT_CONTROLS_WIDTH or WIDTH_CONTROLS_HEIGHT
+        mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT, 
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
         width: 360,
-        height: 640,
+        height: 500, // Reduced height further
     },
     backgroundColor: '#ffffff',
     scene: [GameScene]
