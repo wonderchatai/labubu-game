@@ -8,31 +8,31 @@ html, body {
 
 body {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: column; /* Stack game and UI vertically */
+    justify-content: flex-start; /* Align content to the top */
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
 }
 
 #game-container {
-    width: 100%; /* Make it take full width of parent */
-    height: calc(100% - 180px); /* Adjust height to account for UI container, this will be further refined in main.js */
-    max-width: 360px; /* Maintain aspect ratio roughly, or limit on larger screens */
-    max-height: 640px; /* Limit height on larger screens */
+    width: 100%; /* Take full width */
+    flex-grow: 1; /* Allow game container to grow and fill available space */
+    max-width: 400px; /* Optional: Limit max width on very large screens */
+    max-height: 700px; /* Optional: Limit max height */
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    flex-shrink: 0;
+    /* Phaser will manage the canvas size within this container */
 }
 
 #ui-container {
     width: 100%;
-    max-width: 360px; /* Match game container max-width */
+    max-width: 400px; /* Match game container max-width */
     padding: 10px;
     background-color: #fff;
     border: 2px solid #333;
     border-top: none;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Prevent UI container from shrinking */
 }
 
 #money-display {

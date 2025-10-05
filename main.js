@@ -28,9 +28,9 @@ class GameScene extends Phaser.Scene {
 
         // New: Periodic charge costs and intervals (for testing, use smaller values)
         this.RENT_COST = 50;
-        this.RENT_INTERVAL_MS = 60000; // 1 minute for testing (Real: 7 * 24 * 60 * 60 * 1000 for weekly)
+        this.RENT_INTERVAL_MS = 30000; // Rent every 30 seconds (was 60s)
         this.MEDICAL_BILL_COST = 30;
-        this.MEDICAL_INTERVAL_MS = 90000; // 1.5 minutes for testing (Real: 30 * 24 * 60 * 60 * 1000 for monthly)
+        this.MEDICAL_INTERVAL_MS = 90000; // Still 1.5 minutes
 
         this.notificationText = null; // For displaying temporary messages
     }
@@ -50,25 +50,25 @@ class GameScene extends Phaser.Scene {
         this.loadGame();
         this.calculateOfflineProgression();
 
-        // Timers for stat degradation (adjusted for realism/balance, but still fast for testing)
+        // Timers for stat degradation (increased difficulty)
         this.degradationTimers = [];
         this.degradationTimers.push(this.time.addEvent({
-            delay: 15000, 
+            delay: 10000, // Hunger decreases every 10 seconds (was 15s)
             callback: () => { this.labubuState.hunger = Math.max(0, this.labubuState.hunger - 5); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 20000, 
+            delay: 15000, // Happiness decreases every 15 seconds (was 20s)
             callback: () => { this.labubuState.happiness = Math.max(0, this.labubuState.happiness - 4); },
             loop: true
         }));
          this.degradationTimers.push(this.time.addEvent({
-            delay: 30000, 
+            delay: 20000, // Hygiene decreases every 20 seconds (was 30s)
             callback: () => { this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - 3); },
             loop: true
         }));
         this.degradationTimers.push(this.time.addEvent({
-            delay: 25000, 
+            delay: 20000, // Energy decreases every 20 seconds (was 25s)
             callback: () => { this.labubuState.energy = Math.max(0, this.labubuState.energy - 2); },
             loop: true
         }));
@@ -304,18 +304,18 @@ class GameScene extends Phaser.Scene {
         const timeDiffSeconds = Math.floor((now - this.labubuState.lastUpdated) / 1000);
 
         if (timeDiffSeconds > 0) {
-            // Stat degradation
-            const hungerLossPer15s = 5;
-            const happinessLossPer20s = 4;
-            const hygieneLossPer30s = 3;
-            const energyLossPer25s = 2;
+            // Stat degradation - aligned with new faster rates
+            const hungerLossPer10s = 5;
+            const happinessLossPer15s = 4;
+            const hygieneLossPer20s = 3;
+            const energyLossPer20s = 2;
 
-            this.labubuState.hunger = Math.max(0, this.labubuState.hunger - Math.floor(timeDiffSeconds / 15) * hungerLossPer15s);
-            this.labubuState.happiness = Math.max(0, this.labubuState.happiness - Math.floor(timeDiffSeconds / 20) * happinessLossPer20s);
-            this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - Math.floor(timeDiffSeconds / 30) * hygieneLossPer30s);
-            this.labubuState.energy = Math.max(0, this.labubuState.energy - Math.floor(timeDiffSeconds / 25) * energyLossPer25s);
+            this.labubuState.hunger = Math.max(0, this.labubuState.hunger - Math.floor(timeDiffSeconds / 10) * hungerLossPer10s);
+            this.labubuState.happiness = Math.max(0, this.labubuState.happiness - Math.floor(timeDiffSeconds / 15) * happinessLossPer15s);
+            this.labubuState.hygiene = Math.max(0, this.labubuState.hygiene - Math.floor(timeDiffSeconds / 20) * hygieneLossPer20s);
+            this.labubuState.energy = Math.max(0, this.labubuState.energy - Math.floor(timeDiffSeconds / 20) * energyLossPer20s);
             
-            // New: Offline periodic charges
+            // Offline periodic charges - aligned with new faster rates
             const elapsedTimeSinceLastRent = now - this.labubuState.lastRentPaid;
             const rentCycles = Math.floor(elapsedTimeSinceLastRent / this.RENT_INTERVAL_MS);
             if (rentCycles > 0) {
