@@ -8,14 +8,14 @@ html, body {
 }
 
 body {
-    display: flex;
+    display: flex; /* Re-establish as flex container */
     flex-direction: column; /* Stack game and UI vertically */
     justify-content: flex-start; /* Align content to the top */
     align-items: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
-    height: 100vh; /* Fallback for other browsers */
-    height: -webkit-fill-available; /* Specific for iOS Safari */
+    height: 100vh; /* Ensure body takes full viewport height */
+    height: -webkit-fill-available; /* Keep for general iOS compatibility if needed */
 }
 
 #game-container {
@@ -28,6 +28,7 @@ body {
     display: flex; /* Use flex to center Phaser canvas if smaller than container */
     justify-content: center;
     align-items: center;
+    margin: 0 auto; /* Center horizontally */
 }
 
 #ui-container {
@@ -39,6 +40,13 @@ body {
     border-top: none;
     flex-shrink: 0; /* Prevent UI container from shrinking */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    
+    /* Removed fixed positioning */
+    /* position: fixed; */
+    /* bottom: 0; */
+    /* left: 0; */
+    /* right: 0; */
+    /* z-index: 100; */
 }
 
 #money-display {

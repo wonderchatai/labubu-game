@@ -422,20 +422,24 @@ class GameScene extends Phaser.Scene {
     // New resize method
     resize(scaleManager, baseSize) {
         const uiContainer = document.getElementById('ui-container');
+        const gameContainer = document.getElementById('game-container');
+
         const uiHeight = uiContainer ? uiContainer.offsetHeight : 0;
 
         // Use visualViewport.height for a more accurate height on iOS Safari
         const currentViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const iOS_SAFARI_BUFFER = 80; // Increased buffer for iOS Safari
-        const availableHeight = currentViewportHeight - uiHeight - iOS_SAFARI_BUFFER; 
+        
+        // Calculate available height for the game, ensuring UI fits
+        const availableHeightForGame = currentViewportHeight - uiHeight; 
         const availableWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
 
         let newGameWidth = availableWidth;
         let newGameHeight = availableWidth * (baseSize.height / baseSize.width); 
 
-        if (newGameHeight > availableHeight) {
-            newGameHeight = availableHeight;
-            newGameWidth = availableHeight * (baseSize.width / baseSize.height); 
+        // If calculated height exceeds available height, cap it and adjust width
+        if (newGameHeight > availableHeightForGame) {
+            newGameHeight = availableHeightForGame;
+            newGameWidth = availableHeightForGame * (baseSize.width / baseSize.height); 
         }
 
         const maxWidth = 400; 
@@ -445,6 +449,11 @@ class GameScene extends Phaser.Scene {
         }
 
         scaleManager.resize(newGameWidth, newGameHeight);
+
+        // Manually set margin-bottom for game-container to push it up, avoiding overlap with fixed UI
+        if (gameContainer) {
+            gameContainer.style.marginBottom = `${uiHeight}px`;
+        }
 
         this.labubuSprite.x = newGameWidth / 2;
         this.labubuSprite.y = newGameHeight / 2 + 20; 
