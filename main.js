@@ -50,9 +50,8 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Center Labubu
-        // Adjusted vertical position slightly due to reduced game height
-        this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2 + 20, 'labubu_idle').setScale(0.5);
+        // Center Labubu without explicit scale, let Phaser handle it
+        this.labubuSprite = this.add.sprite(this.scale.width / 2, this.scale.height / 2, 'labubu_idle');
 
         this.loadGame();
         this.calculateOfflineProgression();
@@ -119,7 +118,8 @@ class GameScene extends Phaser.Scene {
 
         // Initial resize call and event listener
         this.scale.on('resize', this.resize, this);
-        this.resize(this.game.scale, { width: 360, height: 500 }); // Initial call with current dimensions
+        // Call resize immediately to set initial dimensions
+        this.resize(this.game.scale); 
     }
 
     update(time, delta) {
@@ -251,6 +251,8 @@ class GameScene extends Phaser.Scene {
         } else if (this.actionTimers.working > 0) {
              if (this.labubuState.energy < 50) {
                  this.labubuSprite.setTexture('labubu_sad');
+             } else {
+                 this.labubuSprite.setTexture('labubu_idle');
              }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
@@ -420,50 +422,47 @@ class GameScene extends Phaser.Scene {
     }
 
     // New resize method
-    resize(scaleManager, baseSize) {
+    resize(scaleManager) {
         const uiContainer = document.getElementById('ui-container');
         const gameContainer = document.getElementById('game-container');
 
         const uiHeight = uiContainer ? uiContainer.offsetHeight : 0;
 
-        // Use visualViewport.height for a more accurate height on iOS Safari
+        // Get current viewport dimensions using visualViewport for accuracy on iOS
         const currentViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const currentViewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
         
         // Calculate available height for the game, ensuring UI fits
-        const availableHeightForGame = currentViewportHeight - uiHeight; 
-        const availableWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+        let availableHeightForGame = currentViewportHeight - uiHeight;
+        if (availableHeightForGame < 0) availableHeightForGame = 0; // Prevent negative height
 
-        let newGameWidth = availableWidth;
-        let newGameHeight = availableWidth * (baseSize.height / baseSize.width); 
-
-        // If calculated height exceeds available height, cap it and adjust width
-        if (newGameHeight > availableHeightForGame) {
-            newGameHeight = availableHeightForGame;
-            newGameWidth = availableHeightForGame * (baseSize.width / baseSize.height); 
-        }
-
+        // Apply max-width constraint for the overall layout
         const maxWidth = 400; 
-        if (newGameWidth > maxWidth) {
-            newGameWidth = maxWidth;
-            newGameHeight = maxWidth * (baseSize.height / baseSize.width);
+        let targetWidth = currentViewportWidth;
+        if (targetWidth > maxWidth) {
+            targetWidth = maxWidth;
         }
 
-        scaleManager.resize(newGameWidth, newGameHeight);
-
-        // Manually set margin-bottom for game-container to push it up, avoiding overlap with fixed UI
+        // Set game-container's dimensions based on calculated available space
+        // Its width should respect the maxWidth, its height is the remaining space
         if (gameContainer) {
-            gameContainer.style.marginBottom = `${uiHeight}px`;
+            gameContainer.style.width = `${targetWidth}px`; // Set width explicitly
+            gameContainer.style.height = `${availableHeightForGame}px`;
+            // Crucially, tell Phaser to resize itself to its parent's new dimensions
+            scaleManager.resize(targetWidth, availableHeightForGame);
         }
 
-        this.labubuSprite.x = newGameWidth / 2;
-        this.labubuSprite.y = newGameHeight / 2 + 20; 
+        // Reposition Labubu and text elements based on new canvas size
+        // scaleManager.width/height reflect the actual canvas size after resize()
+        this.labubuSprite.x = scaleManager.width / 2;
+        this.labubuSprite.y = scaleManager.height / 2; 
 
         if (this.gameOverText) {
-            this.gameOverText.setPosition(newGameWidth / 2, newGameHeight / 2 - 100);
+            this.gameOverText.setPosition(scaleManager.width / 2, scaleManager.height / 2 - 100);
         }
 
         if (this.notificationText) {
-            this.notificationText.setPosition(newGameWidth / 2, newGameHeight / 2 - 200);
+            this.notificationText.setPosition(scaleManager.width / 2, scaleManager.height / 2 - 200);
         }
     }
 }
@@ -475,8 +474,7 @@ const config = {
         mode: Phaser.Scale.RESIZE, // Use RESIZE mode for dynamic resizing
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: 'game-container',
-        width: 360, // Base width
-        height: 500, // Base height, will be dynamically adjusted
+        // Removed fixed width/height here; RESIZE mode will infer from parent
     },
     backgroundColor: '#ffffff',
     scene: [GameScene]
@@ -487,7 +485,8 @@ const game = new Phaser.Game(config);
 // Global window resize listener to trigger game resize
 window.addEventListener('resize', () => {
     if (game && game.scale && game.scene.scenes[0]) {
-        game.scene.scenes[0].resize(game.scale, { width: 360, height: 500 }); 
+        // Pass only the scaleManager, as the baseSize is not strictly needed for RESIZE mode
+        game.scene.scenes[0].resize(game.scale); 
     }
 });
 
@@ -495,7 +494,8 @@ window.addEventListener('resize', () => {
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
         if (game && game.scale && game.scene.scenes[0]) {
-            game.scene.scenes[0].resize(game.scale, { width: 360, height: 500 }); 
+            // Pass only the scaleManager
+            game.scene.scenes[0].resize(game.scale); 
         }
     });
 }
