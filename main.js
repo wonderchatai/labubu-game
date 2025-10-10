@@ -46,12 +46,11 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('labubu_idle', 'assets/idle.PNG');
-        this.load.image('labubu_happy', 'assets/playing.PNG');
-        this.load.image('labubu_sad', 'assets/labubu_sad.png'); 
-        this.load.image('labubu_eating', 'assets/eating.PNG');
-        this.load.image('labubu_sleeping', 'assets/sleep.PNG');
-        this.load.image('labubu_working', 'assets/working.PNG'); // New working sprite
+        this.load.image('labubu_idle', 'assets/labubu_idle.png');
+        this.load.image('labubu_happy', 'assets/labubu_happy.png');
+        this.load.image('labubu_sad', 'assets/labubu_sad.png');
+        this.load.image('labubu_eating', 'assets/labubu_eating.png');
+        this.load.image('labubu_sleeping', 'assets/labubu_sleeping.png');
     }
 
     create() {
@@ -256,7 +255,11 @@ class GameScene extends Phaser.Scene {
         } else if (this.actionTimers.sleeping > 0) {
              this.labubuSprite.setTexture('labubu_sleeping');
         } else if (this.actionTimers.working > 0) {
-             this.labubuSprite.setTexture('labubu_working'); // Use the specific working sprite
+             if (this.labubuState.energy < 50) {
+                 this.labubuSprite.setTexture('labubu_sad');
+             } else {
+                 this.labubuSprite.setTexture('labubu_idle');
+             }
         } else if (this.labubuState.happiness < 30 || this.labubuState.hunger < 30 || this.labubuState.hygiene < 20 || this.labubuState.energy < 20) {
             this.labubuSprite.setTexture('labubu_sad');
         } else {
